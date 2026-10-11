@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TOONBOX">
+<meta name="theme-color" content="#6c63ff">
+<meta name="description" content="웹툰 모아보기 앱">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>TOONBOX</title>
+<style>
+:root{--bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--sub:#9ca3af;--border:#e5e7eb;--accent:#6c63ff;--al:#ede9ff}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto}
+
+/* ── HEADER ── */
+.hdr{background:var(--card);padding:13px 16px 9px;position:sticky;top:0;z-index:200;box-shadow:0 1px 0 var(--border)}
+.hdr-top{display:flex;flex-direction:row;align-items:center;justify-content:space-between;margin-bottom:10px;width:100%}
+.logo{font-size:18px;font-weight:900;letter-spacing:2px;color:var(--text);flex-shrink:0}
+.logo span{color:var(--accent)}
+.hdr-btns{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.logo{font-size:18px;font-weight:900;letter-spacing:2px;color:var(--text)}
+.logo span{color:var(--accent)}
+.hdr-date{font-size:11px;color:var(--sub);margin-right:auto;align-self:center;line-height:1}
+.hdr-btns{display:flex;gap:6px;align-items:center}
+.hdr-icon{width:30px;height:30px;border:none;background:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--sub)}
+
+/* ── DAY TABS ── */
+.day-tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.day-tabs::-webkit-scrollbar{display:none}
+.dt{flex:1;min-width:0;padding:7px 4px;border:none;background:transparent;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;text-align:center;position:relative;border-radius:0}
+.dt.active{color:var(--accent);font-weight:800}
+.dt.active::after{content:'';position:absolute;bottom:-1px;left:10%;right:10%;height:2.5px;background:var(--accent);border-radius:2px}
+.dt.today-tab{color:var(--text)}
+.dt.today-tab.active{color:var(--accent)}
+
+/* ── CONTENT ── */
+.content{padding:10px 12px 100px}
+
+/* ── STATUS FILTER ── */
+.sf-row{display:flex;gap:5px;margin-bottom:10px;overflow-x:auto;scrollbar-width:none;align-items:center}
+.sf-row::-webkit-scrollbar{display:none}
+.sfb{flex-shrink:0;padding:5px 12px;border-radius:16px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--sub)}
+.sfb.on{background:var(--text);color:#fff;border-color:var(--text)}
+.cf-icon-btn{flex-shrink:0;width:28px;height:28px;border-radius:8px;border:1.5px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--sub);margin-left:auto}
+.cf-icon-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ── PLATFORM CARD ── */
+.plat-card{background:var(--card);border-radius:14px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.plat-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 13px 9px;border-bottom:1px solid transparent}
+.plat-hdr.has{border-bottom-color:var(--border)}
+.plat-l{display:flex;align-items:center;gap:7px}
+.plat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.plat-nm{font-size:13px;font-weight:700;line-height:1}
+.plat-cnt{font-size:10px;color:var(--sub);background:var(--bg);padding:2px 6px;border-radius:8px;line-height:1;vertical-align:middle}
+.plat-r{display:flex;align-items:center;gap:6px}
+.plat-list-btn{border:none;background:transparent;font-size:11px;color:var(--sub);cursor:pointer;padding:2px 4px;text-decoration:underline;text-underline-offset:2px}
+.plat-add{border:none;border-radius:7px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;color:#fff;white-space:nowrap}
+
+/* ── SUMMARY MODAL ── */
+.sum-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:20px;pointer-events:none}
+.sum-overlay.open{display:flex;pointer-events:all}
+.sum-modal{background:var(--card);border-radius:20px;width:100%;max-width:400px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column}
+.sum-hdr{padding:18px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0}
+.sum-hdr h3{font-size:16px;font-weight:800}
+.sum-close{border:none;background:none;font-size:20px;cursor:pointer;color:var(--sub);line-height:1}
+.sum-plat-tabs{display:flex;gap:8px;padding:12px 16px 8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;border-bottom:1px solid var(--border)}
+.sum-plat-tabs::-webkit-scrollbar{display:none}
+.spt{flex-shrink:0;padding:5px 14px;border-radius:18px;border:1.5px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;color:var(--sub);background:#fff}
+.spt.on{color:#fff;border-color:transparent}
+.sum-body{overflow-y:auto;padding:12px 16px 20px;flex:1}
+.sum-day-sec{margin-bottom:14px}
+.sum-day-lbl{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:var(--bg);padding:3px 10px;border-radius:10px;margin-bottom:7px}
+.sum-day-cnt{font-size:11px;color:var(--sub);font-weight:400}
+.sum-list{background:var(--bg);border-radius:10px;overflow:hidden}
+.sum-item{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--border)}
+.sum-item:last-child{border-bottom:none}
+.sum-item-left{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+.sum-item-day{font-size:11px;color:var(--sub);flex-shrink:0}
+.sum-item-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum-item-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap;flex-shrink:0;margin-left:6px}
+.sib-10day{background:var(--al);color:var(--accent)}
+.sib-nrest{background:var(--al);color:var(--accent)}
+.sib-hold{background:#fef3c7;color:#92400e}
+.sib-done{background:#e5e7eb;color:#4b5563}
+.sib-return{background:#fce7f3;color:#9d174d}
+
+/* ── CARD GRID - horizontal scroll ── */
+.wt-grid{display:flex;flex-direction:row;gap:7px;padding:8px 8px 10px;overflow-x:auto;scrollbar-width:none}
+.wt-grid::-webkit-scrollbar{display:none}
+
+.wt-card{border-radius:10px;overflow:visible;background:var(--bg);position:relative;user-select:none;flex-shrink:0;width:calc((100% - 8px*3) / 3);display:flex;flex-direction:column}
+/* 10일 연재 강조 테두리 */
+.wt-card.is-10day{outline:1.5px solid rgba(108,99,255,.3);outline-offset:1px}
+
+.wt-thumb{aspect-ratio:1/1;border-radius:10px 10px 0 0;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(145deg,#f5f5fa,#ebebf5)}
+.wt-thumb img{width:100%;height:100%;object-fit:cover}
+
+/* ··· menu button top-right */
+.card-menu-btn{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.88);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.card-menu-btn svg{width:11px;height:11px;fill:var(--sub)}
+
+/* ep badge */
+.ep-badge{position:absolute;bottom:4px;right:4px;background:rgba(26,26,46,.82);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap}
+
+/* top-left badge: 10일/완결/휴재/복귀/nrest */
+.tl-badge{position:absolute;top:0;left:0;font-size:10px;font-weight:700;padding:3px 6px;border-radius:6px 0 6px 0;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.badge-10day{background:rgba(108,99,255,.14);color:var(--accent)}
+.badge-done{background:rgba(100,100,100,.75);color:#fff}
+.badge-hold{background:rgba(180,90,0,.78);color:#fff}
+.badge-return{background:rgba(157,23,77,.75);color:#fff}
+.badge-nrest{background:rgba(108,99,255,.14);color:var(--accent)}
+.badge-pending{background:rgba(100,100,100,.55);color:#fff}
+.badge-10day{background:rgba(108,99,255,.14);color:var(--accent)}
+.badge-done{background:rgba(100,100,100,.75);color:#fff}
+.badge-hold{background:rgba(180,90,0,.78);color:#fff}
+.badge-return{background:rgba(157,23,77,.75);color:#fff}
+.badge-nrest{background:rgba(108,99,255,.14);color:var(--accent)}
+
+/* card body */
+.wt-body{padding:8px 7px 9px;background:var(--card);border-radius:0 0 10px 10px;flex:1;display:flex;flex-direction:column}
+.wt-title{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.wt-bottom{display:flex;align-items:center;justify-content:space-between;gap:3px;margin-top:auto}
+/* 처음 카드 길이 유지용: 예전 +1화 버튼(11px, 상하여백 2px) 높이만큼 줄 높이 확보 */
+.wt-bottom:has(.ep-inc)::before{content:'화';font-size:11px;font-weight:700;font-family:system-ui,sans-serif;padding:2px 0;width:0;margin-right:-3px;overflow:hidden;visibility:hidden}
+.wt-last{font-size:9px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.ep-inc{border:none;border-radius:4px;background:#ede9ff;color:var(--accent);font-size:9px;font-weight:700;padding:2px 6px;cursor:pointer;white-space:nowrap;flex-shrink:0;position:relative}
+.ep-inc::after{content:'';position:absolute;inset:-7px -6px}
+.ep-inc:active{transform:scale(.9)}
+.heart-rating{font-size:13px;cursor:pointer;flex-shrink:0;letter-spacing:-1px;line-height:1;user-select:none;display:inline-flex;align-items:center;padding:2px 0;border:none;background:transparent}
+.ep-inc:active{transform:scale(.9)}
+
+/* empty */
+.empty-state{padding:18px;text-align:center;color:var(--sub)}
+.empty-state p{font-size:11px;line-height:1.6}
+
+.total-bar{text-align:center;padding:10px;color:var(--sub);font-size:11px}
+.total-bar strong{color:var(--text)}
+
+/* ── CARD CONTEXT MENU ── */
+.ctx-menu{display:none;position:fixed;z-index:600;background:var(--card);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.18);width:220px;overflow:hidden;animation:fadeIn .12s ease}
+@keyframes fadeIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.ctx-menu.open{display:block}
+.ctx-title{padding:12px 16px 10px;font-size:13px;font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctx-item{display:block;width:100%;padding:12px 16px;text-align:left;border:none;background:none;font-size:13px;font-family:inherit;cursor:pointer;color:var(--text)}
+.ctx-item:hover{background:var(--bg)}
+.ctx-item.danger{color:#ef4444}
+.ctx-close{display:block;width:100%;padding:11px 16px;text-align:center;border:none;border-top:1px solid var(--border);background:none;font-size:13px;font-weight:600;cursor:pointer;color:var(--sub)}
+
+/* ── BACKUP MENU ── */
+.bk-menu{display:none;position:fixed;z-index:600;background:var(--card);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.18);width:180px;overflow:hidden;animation:fadeIn .12s ease}
+.bk-menu.open{display:block}
+.bk-item{display:block;width:100%;padding:13px 16px;text-align:left;border:none;background:none;font-size:13px;font-family:inherit;cursor:pointer;color:var(--text)}
+.bk-item:hover{background:var(--bg)}
+.bk-close{display:block;width:100%;padding:11px 16px;text-align:center;border:none;border-top:1px solid var(--border);background:none;font-size:13px;font-weight:600;cursor:pointer;color:var(--sub)}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center;pointer-events:none}
+.overlay.open{display:flex;pointer-events:all}
+.modal{background:var(--card);border-radius:22px 22px 0 0;padding:20px 17px 40px;width:100%;max-width:430px;max-height:93vh;overflow-y:auto;animation:su .22s ease}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal h2{font-size:17px;font-weight:800;margin-bottom:16px}
+.mtabs{display:flex;background:var(--bg);border-radius:9px;padding:3px;margin-bottom:14px}
+.mtab{flex:1;padding:7px;border:none;background:transparent;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;color:var(--sub)}
+.mtab.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+
+.fg{margin-bottom:12px}
+.fl{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.4px}
+.fi{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;outline:none;background:#fff}
+.fi:focus{border-color:var(--accent)}
+select.fi{appearance:none;cursor:pointer}
+textarea.fi{resize:none;min-height:60px}
+
+.dc-row{display:flex;flex-wrap:wrap;gap:6px}
+.dc input{display:none}
+.dc label{padding:5px 12px;border-radius:16px;border:1.5px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;color:var(--sub);transition:all .12s}
+.dc input:checked+label{background:var(--text);color:#fff;border-color:var(--text)}
+.dc.disabled label{opacity:.3;cursor:not-allowed;pointer-events:none}
+
+.pr-row{display:flex;flex-wrap:wrap;gap:6px}
+.pr input{display:none}
+.pr label{padding:5px 12px;border-radius:16px;border:1.5px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;color:var(--sub)}
+.pr input:checked+label{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* thumb type toggle */
+.thumb-toggle{display:flex;background:var(--bg);border-radius:9px;padding:3px;margin-bottom:10px}
+.tt-btn{flex:1;padding:7px;border:none;background:transparent;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;color:var(--sub)}
+.tt-btn.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+
+.em-row{display:flex;align-items:center;gap:8px}
+.em-disp{width:44px;height:44px;border-radius:9px;background:var(--bg);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;flex-shrink:0}
+.em-grid{display:none;flex-wrap:wrap;gap:4px;margin-top:7px;background:var(--bg);border-radius:11px;padding:9px;max-height:150px;overflow-y:auto}
+.em-grid.open{display:flex}
+.em-opt{width:34px;height:34px;border-radius:7px;border:none;background:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.em-opt.sel{background:var(--al)}
+
+.img-upload-area{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;color:var(--sub);font-size:12px;position:relative}
+.img-upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.img-preview{width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-top:8px;display:none}
+
+.hint-box{border-radius:10px;padding:10px 12px;margin-top:7px;display:none;font-size:11px;line-height:1.6}
+.hint-box.show{display:block}
+.hint-yellow{background:#fff8e7;border:1.5px solid #fbbf24;color:#92400e}
+.hint-yellow strong{color:#e65100}
+.hint-purple{background:#f8f0ff;border:1.5px solid #c4b5fd;color:#5b21b6}
+.hint-purple strong{color:#5b21b6}
+.hint-green{background:#f0fff4;border:1.5px solid #6ee7b7;color:#065f46}
+.hint-pink{background:#fdf2f8;border:1.5px solid #f9a8d4;color:#9d174d}
+
+.cycle-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.cycle-row .fi{flex:1;min-width:70px;padding:8px 10px;font-size:13px}
+.cycle-filter-row{display:flex;align-items:center;gap:5px;margin-bottom:10px;overflow-x:auto;scrollbar-width:none}
+.cycle-filter-row::-webkit-scrollbar{display:none}
+.cf-btn{flex-shrink:0;padding:3px 10px;border-radius:14px;border:1.5px solid var(--border);background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:var(--sub)}
+.cf-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cf-icon-btn{flex-shrink:0;width:26px;height:26px;border-radius:8px;border:1.5px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--sub);margin-left:auto}
+.cf-btns{display:none;gap:5px;overflow-x:auto;scrollbar-width:none;flex:1}
+.cf-btns::-webkit-scrollbar{display:none}
+
+.mactions{display:flex;gap:9px;margin-top:20px}
+.btn-c{flex:1;padding:13px;border:none;background:var(--bg);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;color:var(--sub)}
+.btn-s{flex:2;padding:13px;border:none;background:var(--text);color:#fff;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer}
+
+.ba{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;min-height:55px;resize:none;outline:none}
+.ba:focus{border-color:var(--accent)}
+
+/* dim removed */
+
+/* ── RECAP ── */
+.rc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:20px;pointer-events:none}
+.rc-overlay.open{display:flex;pointer-events:all}
+.rc-top{padding:12px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.rc-seg{display:flex;gap:6px;margin-bottom:10px}
+.rc-seg button{flex:1;padding:7px 0;border-radius:9px;border:1.5px solid var(--border);background:#fff;font-size:13px;font-weight:700;color:var(--sub);cursor:pointer}
+.rc-seg button.on{background:var(--text);color:#fff;border-color:var(--text)}
+.rc-nav{display:flex;align-items:center;justify-content:center;gap:18px;font-size:15px;font-weight:800}
+.rc-nav button{border:none;background:none;font-size:22px;line-height:1;color:var(--text);cursor:pointer;padding:0 8px}
+.rc-nav button.dis{color:var(--border);cursor:default}
+.rc-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.rc-card{background:var(--bg);border-radius:12px;padding:10px 12px}
+.rc-card .l{font-size:11px;color:var(--sub);margin-bottom:2px}
+.rc-card .v{font-size:21px;font-weight:800}
+.rc-card .v small{font-size:12px;font-weight:600;margin-left:1px}
+.rc-h{font-size:13px;font-weight:800;margin:0 0 8px;display:flex;justify-content:space-between;align-items:baseline}
+.rc-h small{font-size:11px;font-weight:600;color:var(--sub)}
+.rc-sec{margin-bottom:16px}
+.rc-bar{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:6px}
+.rc-bar .n{width:56px;color:var(--sub);flex-shrink:0}
+.rc-bar .t{flex:1;height:10px;background:var(--bg);border-radius:5px;overflow:hidden}
+.rc-bar .t i{display:block;height:100%;border-radius:5px}
+.rc-bar .c{width:34px;text-align:right;font-weight:700;flex-shrink:0}
+.rc-rank{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg);border-radius:10px;margin-bottom:6px}
+.rc-rank .no{font-size:14px;font-weight:800;width:16px;text-align:center;color:var(--accent)}
+.rc-rank .mid{flex:1;min-width:0}
+.rc-rank .nm{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc-rank .sb{font-size:11px;color:var(--sub);margin-top:1px}
+.rc-rank .ct{font-size:13px;font-weight:800;flex-shrink:0}
+.rc-cols{display:flex;gap:4px;align-items:flex-end}
+.rc-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px}
+.rc-col .bv{font-size:10px;color:var(--sub);height:12px;line-height:12px}
+.rc-col .bb{width:100%;border-radius:4px;background:var(--al);min-height:3px}
+.rc-col.top .bb{background:var(--accent)}
+.rc-col.top .bv{color:var(--accent);font-weight:800}
+.rc-col .bl{font-size:10px;color:var(--sub)}
+.rc-mini{display:flex;gap:4px;margin-bottom:10px}
+.rc-mini button{padding:4px 10px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:11px;font-weight:700;color:var(--sub);cursor:pointer}
+.rc-mini button.on{background:var(--text);color:#fff;border-color:var(--text)}
+.rc-note{font-size:10px;color:var(--sub);margin-top:6px}
+.rc-more{border:none;background:none;font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;padding:0}
+.rc-empty{padding:40px 10px;text-align:center;color:var(--sub);font-size:13px;line-height:1.7}
+.rc-empty small{font-size:11px}
+/* ── SORT MODE ── */
+.wt-card.dragging{opacity:.4;transform:scale(.97)}
+.wt-card.drag-over{outline:2px dashed var(--accent);outline-offset:2px}
+.read-dot{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 4px rgba(108,99,255,.5)}
+.read-dot.unread{background:#e5e7eb;box-shadow:none}
+.sort-btn{position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.88);border:none;cursor:grab;display:none;align-items:center;justify-content:center;z-index:11;font-size:11px;color:var(--sub);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.sort-mode .sort-btn{display:flex}
+.sort-mode-bar{display:none;position:fixed;top:0;left:0;right:0;background:var(--accent);color:#fff;text-align:center;padding:10px;font-size:13px;font-weight:700;z-index:500;max-width:430px;margin:0 auto}
+.sort-mode-bar.on{display:block}
+
+/* ── ALERT TOAST ── */
+.alert-toast{display:none;position:fixed;bottom:100px;left:50%;transform:translateX(-50%);border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:999;min-width:280px;max-width:90vw;overflow:hidden}
+.alert-toast.show{display:block}
+.alert-c{background:linear-gradient(135deg,#ef4444,#f59e0b);padding:13px 16px;display:flex;align-items:center;gap:10px;border-radius:16px}
+.alert-c .al-icon{font-size:20px;flex-shrink:0}
+.alert-c .al-title{font-size:13px;font-weight:700;color:#fff}
+.alert-c .al-sub{font-size:11px;color:rgba(255,255,255,.85);margin-top:2px}
+.alert-c .al-close{margin-left:auto;border:none;background:none;font-size:18px;cursor:pointer;color:#fff;opacity:.85;flex-shrink:0}
+
+/* ── SEARCH / DUP ── */
+.hdr-icon.on{background:var(--al);color:var(--accent)}
+.search-bar{display:none;align-items:center;gap:8px;margin-top:8px;padding:0 10px;height:36px;border:1.5px solid var(--accent);border-radius:10px;background:#fff}
+.search-bar.open{display:flex}
+.search-bar input{flex:1;min-width:0;border:none;outline:none;font-size:14px;font-family:inherit;background:transparent;color:var(--text)}
+.search-bar svg{flex-shrink:0;color:var(--sub)}
+.search-clear{border:none;background:none;font-size:16px;color:var(--sub);cursor:pointer;display:none;padding:0 2px}
+.wt-days{font-size:10px;color:var(--sub);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;align-items:center;justify-content:center;padding:24px}
+.dup-overlay.open{display:flex}
+.dup-box{background:var(--card);border-radius:18px;padding:22px 20px 16px;width:100%;max-width:340px;animation:su .18s ease}
+.dup-box h3{font-size:16px;font-weight:800;margin-bottom:8px}
+.dup-box p{font-size:13px;line-height:1.6;color:var(--text);word-break:keep-all}
+.dup-list{margin-top:8px;max-height:140px;overflow-y:auto;font-size:12px;color:var(--sub);line-height:1.6}
+.dup-list div{padding:3px 0;border-top:1px solid var(--border)}
+/* ── FAB ── */
+.fab{position:fixed;bottom:24px;right:24px;width:50px;height:50px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:26px;cursor:pointer;box-shadow:0 4px 16px rgba(108,99,255,.45);display:flex;align-items:center;justify-content:center;z-index:150}
+.fab:active{transform:scale(.94)}
+.fab-sub{position:fixed;bottom:88px;right:24px;width:50px;height:50px;border-radius:50%;border:none;background:var(--card);color:var(--text);font-size:22px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;z-index:150}
+.fab-sub:active{transform:scale(.94)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="logo">T O O N <span>B O X</span></div>
+    <div class="hdr-btns">
+      <button class="hdr-icon" id="searchBtn" title="검색" onclick="toggleSearch()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+      </button>
+      <button class="hdr-icon" id="bkBtn" title="백업">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="day-tabs" id="dayTabs"></div>
+  <div class="search-bar" id="searchBar">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+    <input type="text" id="searchIn" placeholder="작품 제목 검색" autocomplete="off" oninput="onSearch(this.value)">
+    <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+  </div>
+</div>
+
+<!-- Duplicate popup -->
+<div class="dup-overlay" id="dupOverlay">
+  <div class="dup-box">
+    <h3>이미 추가된 작품이에요</h3>
+    <p id="dupMsg"></p>
+    <div class="dup-list" id="dupList"></div>
+    <div class="mactions">
+      <button class="btn-c" onclick="closeDup()">취소</button>
+      <button class="btn-s" onclick="confirmDup()">그래도 추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- Recap Modal -->
+<div class="rc-overlay" id="rcOverlay">
+  <div class="sum-modal">
+    <div class="sum-hdr"><h3>결산</h3><button class="sum-close" onclick="closeRecap()">×</button></div>
+    <div class="rc-top">
+      <div class="rc-seg">
+        <button id="rcBtnM" class="on" onclick="rcMode('m')">월간</button>
+        <button id="rcBtnY" onclick="rcMode('y')">연간</button>
+      </div>
+      <div class="rc-nav">
+        <button id="rcPrev" onclick="rcShift(-1)">‹</button>
+        <span id="rcLbl"></span>
+        <button id="rcNext" onclick="rcShift(1)">›</button>
+      </div>
+    </div>
+    <div class="sum-body" id="rcBody"></div>
+  </div>
+</div>
+
+<div class="rc-overlay" id="rcRankOverlay" style="z-index:310">
+  <div class="sum-modal">
+    <div class="sum-hdr"><h3 id="rcRankTitle">전체 순위</h3><button class="sum-close" onclick="closeRcRank()">×</button></div>
+    <div class="sum-body" id="rcRankBody"></div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="sf-row">
+    <button class="sfb on" onclick="setFilter('reading',this)" id="sfReading">연재 중</button>
+    <button class="sfb" onclick="setFilter('on_hold',this)">휴재</button>
+    <button class="sfb" onclick="setFilter('pending',this)">보류</button>
+    <button class="sfb" onclick="setFilter('completed',this)">완결</button>
+    <button class="sfb" id="sfAll" onclick="setFilter('all',this)">전체</button>
+    <button class="cf-icon-btn" id="cfIconBtn" onclick="openCfMenu()" title="주기 필터" style="display:none;margin-left:auto">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- 주기 필터 팝업 메뉴 -->
+  <div class="bk-menu" id="cfMenu">
+    <button class="bk-item" onclick="setCycleFilter('all')">전체</button>
+    <button class="bk-item" onclick="setCycleFilter('nrest')">n연m휴</button>
+    <button class="bk-item" onclick="setCycleFilter('10day')">10일 연재</button>
+    <button class="bk-item" onclick="setCycleFilter('biweek')">격주 연재</button>
+    <button class="bk-close" onclick="closeAllMenus()">닫기</button>
+  </div>
+  <div id="container"></div>
+  <div class="total-bar" id="totalBar"></div>
+</div>
+
+<!-- Summary Modal (요일별 전체 작품) -->
+<div class="sum-overlay" id="sumOverlay">
+  <div class="sum-modal">
+    <div class="sum-hdr">
+      <h3>요일별 전체 작품</h3>
+      <button class="sum-close" onclick="closeSummary()">×</button>
+    </div>
+    <div class="sum-plat-tabs" id="sumPlatTabs"></div>
+    <div class="sum-body" id="sumBody"></div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openAdd(null)">+</button>
+<button class="fab-sub" onclick="openRecap()" title="결산">
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="18" y1="20" x2="18" y2="9"/></svg>
+</button>
+
+<!-- Sort mode bar -->
+<div class="sort-mode-bar" id="sortModeBar">✥ 순서 변경 중 — 드래그로 이동 후 <button onclick="exitSortMode()" style="background:rgba(255,255,255,.25);border:none;color:#fff;padding:3px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-left:6px">완료</button></div>
+
+<!-- Card context menu -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-title" id="ctxTitle">작품</div>
+  <button class="ctx-item" onclick="ctxEdit()">✏️ 작품 상세 수정</button>
+  <button class="ctx-item" onclick="ctxSort()">✥ 순서 변경</button>
+  <button class="ctx-item danger" onclick="ctxDelete()">🗑️ 삭제</button>
+  <button class="ctx-close" onclick="closeAllMenus()">닫기</button>
+</div>
+
+<!-- Backup menu -->
+<div class="bk-menu" id="bkMenu">
+  <button class="bk-item" onclick="doBackup()">📤 백업 내보내기</button>
+  <button class="bk-item" onclick="document.getElementById('bkFileIn').click()">📥 백업 불러오기</button>
+  <button class="bk-close" onclick="closeAllMenus()">닫기</button>
+</div>
+<input type="file" id="bkFileIn" accept=".json" style="display:none" onchange="doRestore(event)">
+
+<!-- Add/Edit Modal -->
+<div class="overlay" id="modal">
+ <div class="modal">
+  <h2 id="modalH">작품 추가</h2>
+  <div class="mtabs" id="mtabs">
+    <button class="mtab on" onclick="stab('single',this)">단일 추가</button>
+    <button class="mtab" onclick="stab('bulk',this)">요일별 일괄</button>
+  </div>
+
+  <!-- Single tab -->
+  <div id="tabS">
+
+    <!-- Thumb type -->
+    <div class="fg">
+      <label class="fl">썸네일</label>
+      <div class="thumb-toggle">
+        <button class="tt-btn on" onclick="setThumbType('emoji',this)">이모지</button>
+        <button class="tt-btn" onclick="setThumbType('image',this)">사진</button>
+      </div>
+      <!-- emoji -->
+      <div id="thumbEmoji">
+        <div class="em-row">
+          <div class="em-disp" id="emDisp" onclick="toggleEm()">📚</div>
+          <div style="flex:1">
+            <div style="font-size:12px;color:var(--sub);margin-bottom:5px">클릭해서 선택 또는 직접 입력</div>
+            <input type="text" class="fi" id="emCustomIn" maxlength="20" style="padding:7px 10px;font-size:18px;width:100%" oninput="onEmCustom(this)">
+          </div>
+        </div>
+        <div class="em-grid" id="emGrid"></div>
+      </div>
+      <!-- image -->
+      <div id="thumbImage" style="display:none">
+        <div class="img-upload-area" id="imgUpArea">
+          📷 사진 선택 (탭하세요)
+          <input type="file" accept="image/*" id="imgFileIn" onchange="onImgFile(event)">
+        </div>
+        <img class="img-preview" id="imgPreview">
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">작품 제목</label>
+      <input type="text" class="fi" id="titleIn" placeholder="작품 제목">
+    </div>
+
+    <div class="fg" id="platFg">
+      <label class="fl">플랫폼</label>
+      <div class="pr-row" style="flex-wrap:wrap;gap:8px">
+        <div class="pr"><input type="radio" name="plat" id="p0" value="bomtoon"><label for="p0">봄툰</label></div>
+        <div class="pr"><input type="radio" name="plat" id="p1" value="ridi"><label for="p1">리디</label></div>
+        <div class="pr"><input type="radio" name="plat" id="p2" value="lezhin"><label for="p2">레진</label></div>
+        <div class="pr"><input type="radio" name="plat" id="p3" value="mbl"><label for="p3">미스터블루</label></div>
+        <div class="pr"><input type="radio" name="plat" id="p4" value="kakao"><label for="p4">카카오페이지</label></div>
+        <div class="pr"><input type="radio" name="plat" id="p5" value="naver"><label for="p5">네이버</label></div>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">연재 요일</label>
+      <div class="dc-row" id="dayChecks">
+        <div class="dc"><input type="checkbox" id="d1" value="1" onchange="onDayChange(this)"><label for="d1">월</label></div>
+        <div class="dc"><input type="checkbox" id="d2" value="2" onchange="onDayChange(this)"><label for="d2">화</label></div>
+        <div class="dc"><input type="checkbox" id="d3" value="3" onchange="onDayChange(this)"><label for="d3">수</label></div>
+        <div class="dc"><input type="checkbox" id="d4" value="4" onchange="onDayChange(this)"><label for="d4">목</label></div>
+        <div class="dc"><input type="checkbox" id="d5" value="5" onchange="onDayChange(this)"><label for="d5">금</label></div>
+        <div class="dc"><input type="checkbox" id="d6" value="6" onchange="onDayChange(this)"><label for="d6">토</label></div>
+        <div class="dc"><input type="checkbox" id="d0" value="0" onchange="onDayChange(this)"><label for="d0">일</label></div>
+        <div class="dc"><input type="checkbox" id="d10" value="10day" onchange="onDayChange(this)"><label for="d10">10일</label></div>
+      </div>
+      <div class="hint-box hint-yellow" id="tendaySec">
+        <strong>10일 연재 날짜</strong>를 슬래시로 구분 입력<br><strong>예) 1/11/21</strong>
+        <input type="text" class="fi" id="tendayIn" placeholder="예: 1/11/21" style="margin-top:7px">
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">연재 주기</label>
+      <select class="fi" id="cycleType" onchange="onCycleChange()">
+        <option value="">없음 (매주)</option>
+        <option value="biweek">격주 연재</option>
+        <option value="nrest">n연 m휴</option>
+      </select>
+      <div class="hint-box hint-green" id="biweekSec">
+        가장 최근 연재된 날짜를 선택하세요
+        <input type="date" class="fi" id="biweekDate" style="margin-top:7px">
+      </div>
+      <div class="hint-box hint-purple" id="cycleSec">
+        <strong>n연 m휴</strong>: n주 연재 후 m주 휴재 반복<br>
+        <strong>0 = 휴재</strong>, 1~n = 연재 주차<br>
+        ex) 4연1휴: 연재 첫주→1, 마지막연재→4, 휴재→0
+        <div class="cycle-row">
+          <select class="fi" id="cycleN" onchange="updateCyclePreview()">
+            <option value="">연재 주수</option>
+            <option value="2">2연</option><option value="3">3연</option><option value="4">4연</option>
+            <option value="5">5연</option><option value="6">6연</option><option value="7">7연</option>
+            <option value="8">8연</option><option value="9">9연</option>
+          </select>
+          <select class="fi" id="cycleM" onchange="updateCyclePreview()">
+            <option value="">휴재 주수</option>
+            <option value="1">1휴</option><option value="2">2휴</option><option value="3">3휴</option>
+            <option value="4">4휴</option><option value="5">5휴</option><option value="6">6휴</option>
+            <option value="7">7휴</option><option value="8">8휴</option>
+          </select>
+          <input type="number" class="fi" id="cyclePos" placeholder="현재 주차" min="1" style="width:100px" oninput="updateCyclePreview()">
+        </div>
+        <div class="cycle-preview" id="cyclePreview"></div>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">연재 상태</label>
+      <select class="fi" id="statusIn" onchange="onStatusChange()">
+        <option value="reading">연재 중</option>
+        <option value="on_hold">휴재</option>
+        <option value="pending">보류</option>
+        <option value="completed">완결</option>
+      </select>
+      <div class="hint-box hint-pink" id="returnSec">
+        복귀 예정일을 입력하면 해당 날짜부터 연재 탭에 표시됩니다
+        <input type="date" class="fi" id="returnDate" style="margin-top:7px">
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">현재 화수</label>
+      <input type="number" class="fi" id="epIn" value="1" min="0">
+    </div>
+
+    <div class="fg">
+      <label class="fl">메모</label>
+      <textarea class="fi" id="memoIn" placeholder="메모를 입력하세요" rows="2"></textarea>
+    </div>
+  </div>
+
+  <!-- Bulk tab -->
+  <div id="tabB" style="display:none">
+    <div class="fg">
+      <label class="fl">플랫폼</label>
+      <div class="pr-row">
+        <div class="pr"><input type="radio" name="bp" id="b0" value="bomtoon"><label for="b0">봄툰</label></div>
+        <div class="pr"><input type="radio" name="bp" id="b1" value="ridi"><label for="b1">리디</label></div>
+        <div class="pr"><input type="radio" name="bp" id="b2" value="lezhin"><label for="b2">레진</label></div>
+        <div class="pr"><input type="radio" name="bp" id="b3" value="mbl"><label for="b3">미스터블루</label></div>
+        <div class="pr"><input type="radio" name="bp" id="b4" value="kakao"><label for="b4">카카오페이지</label></div>
+        <div class="pr"><input type="radio" name="bp" id="b5" value="naver"><label for="b5">네이버</label></div>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">요일별 작품 입력 (줄바꿈 구분)</label>
+      <div id="bulkIn" style="display:flex;flex-direction:column;gap:7px"></div>
+    </div>
+  </div>
+
+  <div class="mactions">
+    <button class="btn-c" onclick="closeModal()">취소</button>
+    <button class="btn-s" onclick="saveW()">저장하기</button>
+  </div>
+ </div>
+</div>
+
+<script>
+/* ===== CONSTANTS ===== */
+const PLATS=[
+  {id:'bomtoon', name:'봄툰',        color:'#ff6b9d',light:'#fff0f5'},
+  {id:'ridi',    name:'리디',        color:'#3b82f6',light:'#eff6ff'},
+  {id:'lezhin',  name:'레진',        color:'#e84057',light:'#fff0f2'},
+  {id:'mbl',     name:'미스터블루',  color:'#5b73e8',light:'#eef1ff'},
+  {id:'kakao',   name:'카카오페이지',color:'#f59e0b',light:'#fffbeb'},
+  {id:'naver',   name:'네이버',      color:'#03c75a',light:'#e8fff3'},
+];
+const DAY_ORDER=[1,2,3,4,5,6,0];
+const DAY_N={0:'일',1:'월',2:'화',3:'수',4:'목',5:'금',6:'토'};
+const DEFEM={bomtoon:'🌸',ridi:'📖',lezhin:'💎',mbl:'📘',kakao:'💬',naver:'🟢'};
+const EMOJIS=[
+  '📚','📖','✨','🌸','🌟','💜','❤️','🧡','💛','💚','💙','🖤','🤍','💗','💕','🩷','🩵','🩶','🤎','💝',
+  '🌙','☀️','🌈','⭐','🔥','💫','🎀','🎭','🗡️','👑','🏹','🌹','🦋','🐉','🐺','🌙','🌛','🌜','🌝','☁️',
+  '🐱','🐰','🦊','🐻','🐼','🌺','🍀','🍁','🌊','🏔️','🎪','🎨','🎬','🎵','🎮','🐯','🦁','🐮','🐷','🐸',
+  '💎','💍','🗝️','⚔️','🛡️','🪄','🔮','🕯️','🏰','🌃','🌌','🌠','💐','🍓','🍒','🍎','🍇','🍑','🫐','🍋',
+  '🦄','🌻','🌷','🥀','🦅','🐬','🐠','🌵','🏖️','🗻','⛩️','🎯','🃏','🧩','🪷','🫧','🌾','🍂','🌿','🍃',
+  '🧸','🪆','🎠','🎡','🎢','🎪','🧿','🪬','🔑','🗡️','🪤','🧲','💌','📜','📿','🪩','🕊️','🦢','🦩','🦚',
+  '🌍','🌏','🌕','🌑','🌙','💧','❄️','🌪️','🌈','⚡','🌊','🔱','♾️','🔰','⚜️','🏵️','🎖️','🎗️','🎫','🎟️'];
+
+/* ===== STATE ===== */
+let wt=JSON.parse(localStorage.getItem('moabom_v5')||'[]');
+let curDay=dispDay();
+let filter='reading';
+let cycleFilter='all';
+let searchQ='';
+let editId=null;
+let selEm='📚';
+let selImg=null;
+let thumbType='emoji';
+let ctxTargetId=null;
+
+/* ===== TIME ===== */
+function dispDay(){const n=new Date();let d=n.getDay();if(n.getHours()>=22)d=(d+1)%7;return d}
+function realDay(){return new Date().getDay()}
+function todayStr(){const n=new Date();return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`}
+function pad(n){return String(n).padStart(2,'0')}
+function fmtDate(s){if(!s)return'';const[,m,d]=s.split('-');return`${parseInt(m)}/${parseInt(d)}`}
+
+function getWeekNum(){
+  const d=new Date();d.setHours(0,0,0,0);
+  d.setDate(d.getDate()+3-(d.getDay()+6)%7);
+  const w=new Date(d.getFullYear(),0,4);
+  return 1+Math.round(((d-w)/86400000-3+(w.getDay()+6)%7)/7);
+}
+
+/* ===== CYCLE ===== */
+function nrestActive(w){
+  if(!w.cycleN||!w.cycleM||!w.cyclePos)return true;
+  const n=+w.cycleN,m=+w.cycleM,tot=n+m;
+  const diff=getWeekNum()-(w.cycleSavedWeek||getWeekNum());
+  // 0=휴재 첫주, 1~n=연재
+  const rawPos=(+w.cyclePos+diff)%tot;
+  return rawPos!==0&&rawPos<=n;
+}
+
+function getCurrentCyclePos(w){
+  if(!w.cycleN||!w.cycleM||!w.cyclePos)return +w.cyclePos||0;
+  const n=+w.cycleN,m=+w.cycleM,tot=n+m;
+  const diff=getWeekNum()-(w.cycleSavedWeek||getWeekNum());
+  return(+w.cyclePos+diff)%tot;
+}
+function biweekActive(w,tgt){
+  if(!w.biweekDate)return true;
+  tgt=tgt||new Date();tgt.setHours(0,0,0,0);
+  const diff=Math.round((tgt-new Date(w.biweekDate))/86400000);
+  return diff>=0&&diff%14===0;
+}
+function biweekNext(w){
+  if(!w.biweekDate)return null;
+  const last=new Date(w.biweekDate);last.setHours(0,0,0,0);
+  const now=new Date();now.setHours(0,0,0,0);
+  let d=new Date(last);while(d<now)d.setDate(d.getDate()+14);
+  return d;
+}
+
+/* ===== 10day ===== */
+function parse10(s){if(!s)return[];return s.split('/').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n)&&n>=1&&n<=31)}
+
+/* ===== RETURN DATE ===== */
+function shouldShowReturned(w){
+  if(w.status!=='on_hold'||!w.returnDate) return false;
+  const today=todayStr();
+  return w.returnDate<=today;
+}
+
+/* ===== VISIBILITY ===== */
+function isVisible(w,dayIdx){
+  if(dayIdx===-1)return true;
+  if(!w.days||!w.days.length)return false;
+  const has10=w.days.includes('10day');
+  const hasDay=w.days.includes(dayIdx);
+  if(!hasDay&&!has10)return false;
+  if(hasDay){
+    if(w.cycleType==='nrest')return nrestActive(w);
+    if(w.cycleType==='biweek'){
+      const now=new Date();now.setHours(0,0,0,0);
+      const tgt=new Date(now);tgt.setDate(tgt.getDate()+((dayIdx-now.getDay()+7)%7));
+      return biweekActive(w,tgt);
+    }
+    return true;
+  }
+  if(has10){
+    const dates=parse10(w.tendayDates);
+    if(!dates.length)return true;
+    // 탭에서 선택한 요일의 실제 날짜 기준으로 판단
+    const tgt=getTabDate(dayIdx);
+    return dates.includes(tgt.getDate());
+  }
+  return false;
+}
+
+function normTitle(s){return String(s||'').replace(/\s+/g,'').toLowerCase()}
+function getItems(platId){
+  if(searchQ){
+    return wt.filter(w=>w.platform===platId&&normTitle(w.title).includes(searchQ));
+  }
+  const filtered=wt.filter(w=>{
+    if(w.platform!==platId)return false;
+    const returned=shouldShowReturned(w);
+    const eff=returned?'reading':w.status;
+
+    // 전체 탭 - wt 배열 순서 그대로 (전체보기 순서)
+    if(curDay===-1){
+      const statusOk=filter==='all'||eff===filter;
+      if(!statusOk)return false;
+      if(cycleFilter==='nrest') return w.cycleType==='nrest';
+      if(cycleFilter==='10day') return w.days&&w.days.includes('10day');
+      if(cycleFilter==='biweek') return w.cycleType==='biweek';
+      return true;
+    }
+
+    // 요일 탭
+    if(filter==='on_hold') return eff==='on_hold';
+    if(filter==='completed') return eff==='completed';
+    if(filter==='pending') return w.status==='pending';
+    if(filter==='all'){
+      if(eff==='on_hold'||eff==='completed') return true;
+      if(w.status==='pending') return false; // 보류는 요일탭 전체에서도 안 보임
+      return isVisible(w,curDay);
+    }
+    // 연재중 기본: 휴재지만 복귀일 지난 경우(returned) 포함
+    if(w.status==='completed') return false;
+    if(w.status==='pending') return false;
+    if(w.status==='on_hold'&&!returned) return false;
+    return isVisible(w,curDay);
+  });
+
+  // 전체 탭: 요일별(월~일) → 10일연재 → 휴재/완결 순
+  if(curDay===-1){
+    const DAY_ORDER_SORT=[1,2,3,4,5,6,0];
+    const seen=new Set();
+    const dedup=arr=>arr.filter(w=>{if(seen.has(w.id))return false;seen.add(w.id);return true});
+    const byDay=DAY_ORDER_SORT.flatMap(d=>
+      filtered.filter(w=>{
+        const ret=shouldShowReturned(w);
+        return w.days&&w.days.includes(d)&&!w.days.includes('10day')&&(w.status==='reading'||ret);
+      })
+    );
+    const tenday=filtered.filter(w=>{
+      const ret=shouldShowReturned(w);
+      return w.days&&w.days.includes('10day')&&(w.status==='reading'||ret);
+    });
+    const onHold=filtered.filter(w=>w.status==='on_hold');
+    const pendingL=filtered.filter(w=>w.status==='pending');
+    const doneL=filtered.filter(w=>w.status==='completed');
+    return [...dedup(byDay),...dedup(tenday),...dedup(onHold),...dedup(pendingL),...dedup(doneL)];
+  }
+
+  // 요일 탭: 10일 연재 맨 앞으로
+  return [
+    ...filtered.filter(w=>w.days&&w.days.includes('10day')),
+    ...filtered.filter(w=>!w.days||!w.days.includes('10day')),
+  ];
+  return filtered;
+}
+
+/* ===== RECAP (결산) ===== */
+let recapLog=[];
+try{recapLog=JSON.parse(localStorage.getItem('moabom_log')||'[]')}catch(e){recapLog=[]}
+function saveLog(){localStorage.setItem('moabom_log',JSON.stringify(recapLog))}
+
+let rcKind='m',rcYear=0,rcMonth=0;
+function openRecap(){
+  const n=new Date();
+  rcKind='m';rcYear=n.getFullYear();rcMonth=n.getMonth();
+  document.getElementById('rcOverlay').classList.add('open');
+  renderRecap();
+}
+function closeRecap(){document.getElementById('rcOverlay').classList.remove('open')}
+document.getElementById('rcOverlay').addEventListener('click',e=>{if(e.target.id==='rcOverlay')closeRecap()});
+let rcWdMode='press';
+let rcRankWc={},rcRankIds=[];
+function rcRankRow(id,i){
+  const o=rcRankWc[id],cur=wt.find(w=>w.id===id);
+  const pp=PLATS.find(x=>x.id===o.plat)||{name:o.plat};
+  return`<div class="rc-rank"><span class="no">${i+1}</span><span class="mid"><div class="nm">${esc(cur?cur.title:o.title)}</div><div class="sb">${esc(pp.name)} · ${o.d.size}일 읽음</div></span><span class="ct">${o.n}회</span></div>`;
+}
+function openRcRank(){
+  const lbl=rcKind==='y'?`${rcYear}년`:`${rcYear}년 ${rcMonth+1}월`;
+  document.getElementById('rcRankTitle').textContent=`${lbl} 전체 순위 (${rcRankIds.length}작품)`;
+  document.getElementById('rcRankBody').innerHTML=rcRankIds.map((id,i)=>rcRankRow(id,i)).join('');
+  document.getElementById('rcRankOverlay').classList.add('open');
+}
+function closeRcRank(){document.getElementById('rcRankOverlay').classList.remove('open')}
+document.getElementById('rcRankOverlay').addEventListener('click',e=>{if(e.target.id==='rcRankOverlay')closeRcRank()});
+function rcMode(k){rcKind=k;renderRecap()}
+function rcWd(m){
+  const b=document.getElementById('rcBody'),y=b.scrollTop;
+  rcWdMode=m;renderRecap();b.scrollTop=y;
+}
+function rcAtNow(){
+  const n=new Date();
+  return rcKind==='y'?rcYear>=n.getFullYear():(rcYear>n.getFullYear()||(rcYear===n.getFullYear()&&rcMonth>=n.getMonth()));
+}
+function rcShift(d){
+  if(d>0&&rcAtNow())return;
+  if(rcKind==='y')rcYear+=d;
+  else{rcMonth+=d;if(rcMonth<0){rcMonth=11;rcYear--}else if(rcMonth>11){rcMonth=0;rcYear++}}
+  renderRecap();
+}
+function dayNum(s){return Math.round(Date.parse(s+'T00:00:00Z')/86400000)}
+function rcCols(items,fmtLbl,h){
+  const max=Math.max(...items.map(x=>x.v),1);
+  const top=items.reduce((b,x,i)=>x.v>items[b].v?i:b,0);
+  return`<div class="rc-cols">${items.map((x,i)=>`<div class="rc-col${x.v>0&&i===top?' top':''}"><div class="bv">${x.v||''}</div><div class="bb" style="height:${Math.round(x.v/max*h)}px"></div><div class="bl">${fmtLbl(x,i)}</div></div>`).join('')}</div>`;
+}
+function renderRecap(){
+  document.getElementById('rcBtnM').classList.toggle('on',rcKind==='m');
+  document.getElementById('rcBtnY').classList.toggle('on',rcKind==='y');
+  document.getElementById('rcLbl').textContent=rcKind==='y'?`${rcYear}년`:`${rcYear}년 ${rcMonth+1}월`;
+  document.getElementById('rcNext').classList.toggle('dis',rcAtNow());
+  const prefix=rcKind==='y'?`${rcYear}-`:`${rcYear}-${pad(rcMonth+1)}-`;
+  const ent=recapLog.filter(r=>r[0].startsWith(prefix));
+  const body=document.getElementById('rcBody');
+  if(!ent.length){
+    body.innerHTML=`<div class="rc-empty">이 기간에 누른 기록이 없어요<br><small>+1화를 누른 기록부터 쌓여요</small></div>`;
+    return;
+  }
+  const total=ent.length;
+  const dates=[...new Set(ent.map(r=>r[0]))].sort();
+  let best=1,run=1;
+  for(let i=1;i<dates.length;i++){
+    if(dayNum(dates[i])-dayNum(dates[i-1])===1){run++;if(run>best)best=run}else run=1;
+  }
+  const avg=(total/dates.length).toFixed(1);
+  let html=`<div class="rc-cards">
+    <div class="rc-card"><div class="l">누른 화수</div><div class="v">${total}<small>화</small></div></div>
+    <div class="rc-card"><div class="l">읽은 날</div><div class="v">${dates.length}<small>일</small></div></div>
+    <div class="rc-card"><div class="l">최장 연속</div><div class="v">${best}<small>일</small></div></div>
+    <div class="rc-card"><div class="l">하루 평균</div><div class="v">${avg}<small>화</small></div></div>
+  </div>`;
+
+  const pc={};
+  ent.forEach(r=>{pc[r[2]]=(pc[r[2]]||0)+1});
+  const pl=Object.keys(pc).sort((a,b)=>pc[b]-pc[a]);
+  const pmax=pc[pl[0]];
+  html+=`<div class="rc-sec"><div class="rc-h">플랫폼별 화수</div>${pl.map(id=>{
+    const pp=PLATS.find(x=>x.id===id)||{name:id,color:'#999'};
+    return`<div class="rc-bar"><span class="n">${esc(pp.name)}</span><span class="t"><i style="width:${Math.round(pc[id]/pmax*100)}%;background:${pp.color}"></i></span><span class="c">${pc[id]}</span></div>`;
+  }).join('')}</div>`;
+
+  const wc={};
+  ent.forEach(r=>{
+    const o=wc[r[1]]||(wc[r[1]]={n:0,d:new Set(),plat:r[2],title:r[3]});
+    o.n++;o.d.add(r[0]);
+  });
+  const rankAll=Object.keys(wc).sort((a,b)=>wc[b].n-wc[a].n||wc[b].d.size-wc[a].d.size);
+  rcRankWc=wc;rcRankIds=rankAll;
+  html+=`<div class="rc-sec"><div class="rc-h">꾸준히 읽은 작품${rankAll.length>5?'<button class="rc-more" onclick="openRcRank()">전체 보기 ›</button>':'<small>누른 횟수 기준</small>'}</div>${rankAll.slice(0,5).map((id,i)=>rcRankRow(id,i)).join('')}</div>`;
+
+  const wd=Array(7).fill(0);
+  let skipped=0;
+  ent.forEach(r=>{
+    if(rcWdMode==='press'){wd[new Date(r[0]+'T00:00:00').getDay()]++;return}
+    const cur=wt.find(w=>w.id===r[1]);
+    const ds=cur?(cur.days||[]).filter(d=>typeof d==='number'):[];
+    if(!ds.length){skipped++;return}
+    const dow=new Date(r[0]+'T00:00:00').getDay();
+    for(let k=0;k<7;k++){const d=(dow-k+7)%7;if(ds.includes(d)){wd[d]++;break}}
+  });
+  const wItems=DAY_ORDER.map(d=>({v:wd[d],l:DAY_N[d]}));
+  const wTop=wItems.reduce((b,x,i)=>x.v>wItems[b].v?i:b,0);
+  const wSum=wd.reduce((a,b)=>a+b,0);
+  const wdHtml=`<div class="rc-sec"><div class="rc-h">${rcWdMode==='air'?'연재 요일별 화수':'누른 요일별 화수'}<small>${wSum?`${wItems[wTop].l}요일 ${wItems[wTop].v}화`:''}</small></div>
+    <div class="rc-mini"><button class="${rcWdMode==='air'?'on':''}" onclick="rcWd('air')">연재 요일</button><button class="${rcWdMode==='press'?'on':''}" onclick="rcWd('press')">누른 요일</button></div>
+    ${wSum?rcCols(wItems,x=>x.l,56):'<div class="rc-note">집계할 기록이 없어요</div>'}
+    ${rcWdMode==='air'&&skipped?`<div class="rc-note">요일이 없거나 삭제된 작품 ${skipped}화는 제외했어요</div>`:''}</div>`;
+
+  if(rcKind==='y'){
+    const mc=Array(12).fill(0);
+    ent.forEach(r=>{mc[parseInt(r[0].slice(5,7))-1]++});
+    html+=`<div class="rc-sec"><div class="rc-h">월별 화수</div>${rcCols(mc.map((v,i)=>({v,l:`${i+1}월`})),x=>x.l.replace('월',''),70)}</div>`;
+  }
+
+  html+=wdHtml;
+  body.innerHTML=html;
+}
+
+/* ===== SORT MODE ===== */
+let sortMode=false;
+let dragSrcId=null;
+
+function ctxSort(){
+  closeAllMenus();
+  enterSortMode();
+}
+
+function enterSortMode(){
+  sortMode=true;
+  document.getElementById('sortModeBar').classList.add('on');
+  document.querySelectorAll('.wt-grid').forEach(g=>g.classList.add('sort-mode'));
+  renderAll();
+}
+
+function exitSortMode(){
+  sortMode=false;
+  document.getElementById('sortModeBar').classList.remove('on');
+  document.querySelectorAll('.wt-grid').forEach(g=>g.classList.remove('sort-mode'));
+  save();
+  renderAll();
+}
+
+function initDrag(){
+  if(!sortMode) return;
+  document.querySelectorAll('.wt-card[data-id]').forEach(card=>{
+    card.setAttribute('draggable','true');
+    card.addEventListener('dragstart',e=>{
+      dragSrcId=card.dataset.id;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+    card.addEventListener('dragend',()=>{
+      document.querySelectorAll('.wt-card').forEach(c=>c.classList.remove('dragging','drag-over'));
+    });
+    card.addEventListener('dragover',e=>{
+      e.preventDefault();
+      document.querySelectorAll('.wt-card').forEach(c=>c.classList.remove('drag-over'));
+      card.classList.add('drag-over');
+    });
+    card.addEventListener('drop',e=>{
+      e.preventDefault();
+      const targetId=card.dataset.id;
+      if(dragSrcId&&targetId&&dragSrcId!==targetId){
+        const si=wt.findIndex(w=>w.id===dragSrcId);
+        const ti=wt.findIndex(w=>w.id===targetId);
+        if(si>=0&&ti>=0){
+          const [moved]=wt.splice(si,1);
+          wt.splice(ti,0,moved);
+          save();renderAll();
+          initDrag();
+        }
+      }
+      document.querySelectorAll('.wt-card').forEach(c=>c.classList.remove('drag-over'));
+    });
+    // 터치 드래그 (모바일)
+    let touchY=0,touchX=0;
+    card.addEventListener('touchstart',e=>{
+      if(!sortMode)return;
+      dragSrcId=card.dataset.id;
+      touchY=e.touches[0].clientY;
+      touchX=e.touches[0].clientX;
+      card.classList.add('dragging');
+    },{passive:true});
+    card.addEventListener('touchmove',e=>{
+      if(!sortMode||!dragSrcId)return;
+      e.preventDefault();
+      const t=e.touches[0];
+      const el=document.elementFromPoint(t.clientX,t.clientY);
+      const target=el&&el.closest('.wt-card[data-id]');
+      document.querySelectorAll('.wt-card').forEach(c=>c.classList.remove('drag-over'));
+      if(target&&target.dataset.id!==dragSrcId) target.classList.add('drag-over');
+    },{passive:false});
+    card.addEventListener('touchend',e=>{
+      if(!sortMode||!dragSrcId)return;
+      const t=e.changedTouches[0];
+      const el=document.elementFromPoint(t.clientX,t.clientY);
+      const target=el&&el.closest('.wt-card[data-id]');
+      if(target&&target.dataset.id&&target.dataset.id!==dragSrcId){
+        const si=wt.findIndex(w=>w.id===dragSrcId);
+        const ti=wt.findIndex(w=>w.id===target.dataset.id);
+        if(si>=0&&ti>=0){
+          const [moved]=wt.splice(si,1);
+          wt.splice(ti,0,moved);
+          save();renderAll();
+          initDrag();
+        }
+      }
+      document.querySelectorAll('.wt-card').forEach(c=>c.classList.remove('dragging','drag-over'));
+      dragSrcId=null;
+    },{passive:true});
+  });
+}
+
+/* ===== INIT ===== */
+function init(){
+  buildEmGrid();buildBulkIn();
+  renderTabs();renderAll();
+  document.getElementById('bkBtn').addEventListener('click',openBkMenu);
+}
+
+/* ===== TABS ===== */
+function getTabDate(dayIdx){
+  // 22시 이후면 하루 앞으로 (다음날 기준)
+  const now=new Date();
+  const base=new Date(now);
+  if(now.getHours()>=22) base.setDate(base.getDate()+1);
+  base.setHours(0,0,0,0);
+  // 이번 주 월요일 구하기 (22시 넘은 일요일이면 다음주 월요일)
+  const dayOfWeek=base.getDay();
+  const monday=new Date(base);
+  monday.setDate(base.getDate()-((dayOfWeek+6)%7));
+  // 요일별 offset: 1=월(0), 2=화(1) ... 0=일(6)
+  const offsetMap={1:0,2:1,3:2,4:3,5:4,6:5,0:6};
+  const tgt=new Date(monday);
+  tgt.setDate(monday.getDate()+offsetMap[dayIdx]);
+  return tgt;
+}
+
+function renderTabs(){
+  const rd=realDay();
+  const tabs=[{l:'전체',v:-1,sub:''},...DAY_ORDER.map(i=>{
+    const tgt=getTabDate(i);
+    return{l:DAY_N[i],v:i,sub:`${tgt.getMonth()+1}/${tgt.getDate()}`};
+  })];
+  document.getElementById('dayTabs').innerHTML=tabs.map(t=>{
+    let cls='dt';
+    if(t.v===curDay)cls+=' active';
+    if(t.v===rd)cls+=' today-tab';
+    return`<button class="${cls}" onclick="selDay(${t.v})">
+      <div>${t.l}</div>
+      ${t.sub?`<div style="font-size:9px;font-weight:400;opacity:.7;margin-top:1px">${t.sub}</div>`:''}
+    </button>`;
+  }).join('');
+}
+
+function selDay(d){
+  curDay=d;
+  filter=d===-1?'all':'reading';
+  cycleFilter='all';
+  document.querySelectorAll('.sfb').forEach(b=>b.classList.remove('on'));
+  const target=filter==='all'
+    ? document.getElementById('sfAll')
+    : document.getElementById('sfReading');
+  if(target) target.classList.add('on');
+  const cfRow=document.getElementById('cycleFilterRow');
+  if(cfRow) cfRow.style.display=d===-1?'flex':'none';
+  const cfIcon=document.getElementById('cfIconBtn');
+  if(cfIcon) cfIcon.style.display=d===-1?'flex':'none';
+  if(cfIcon) cfIcon.classList.remove('on');
+  renderTabs();renderAll();
+}
+function setFilter(f,btn){filter=f;document.querySelectorAll('.sfb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderAll()}
+function setCycleFilter(f){
+  cycleFilter=f;
+  closeAllMenus();
+  const icon=document.getElementById('cfIconBtn');
+  if(icon) icon.classList.toggle('on', f!=='all');
+  renderAll();
+}
+function openCfMenu(){
+  const btn=document.getElementById('cfIconBtn');
+  const r=btn.getBoundingClientRect();
+  const menu=document.getElementById('cfMenu');
+  menu.style.top=(r.bottom+6)+'px';
+  menu.style.right=(window.innerWidth-r.right)+'px';
+  menu.style.left='auto';
+  menu.classList.add('open');
+}
+function toggleCycleFilter(){openCfMenu()}
+
+/* ===== RENDER ===== */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function renderAll(){
+  const c=document.getElementById('container');
+  let total=0;
+
+  c.innerHTML=PLATS.map(p=>{
+    const items=getItems(p.id);
+    total+=items.length;
+
+    // 요일 탭에서 아이템 없으면 플랫폼 섹션 자체 숨김
+    if((curDay!==-1||searchQ)&&items.length===0)return'';
+
+    const has=items.length>0;
+
+    const cards=items.map(w=>{
+      // thumb
+      let thumbInner='';
+      if(w.thumbType==='image'&&w.image){
+        thumbInner=`<img src="${w.image}" alt="${esc(w.title)}">`;
+      } else {
+        thumbInner=w.emoji||DEFEM[p.id]||'📚';
+      }
+
+      // top-left badge
+      const has10=w.days&&w.days.includes('10day');
+      const returned=shouldShowReturned(w);
+      let tlBadge='';
+      if(w.status==='completed'){
+        tlBadge=`<span class="tl-badge badge-done">[완결]</span>`;
+      } else if(w.status==='pending'){
+        tlBadge=`<span class="tl-badge badge-pending">[보류]</span>`;
+      } else if(w.status==='on_hold'&&!returned){
+        const rd=w.returnDate?` ~${fmtDate(w.returnDate)}`:'';
+        tlBadge=`<span class="tl-badge badge-hold">[휴재${rd}]</span>`;
+      } else if(returned){
+        tlBadge=`<span class="tl-badge badge-return">[복귀↑]</span>`;
+      } else if(has10){
+        const dates=w.tendayDates?`(${w.tendayDates})`:'';
+        tlBadge=`<span class="tl-badge badge-10day">10일 ${dates}</span>`;
+      } else if(w.cycleType==='nrest'&&w.cycleN&&w.cycleM){
+        tlBadge=`<span class="tl-badge badge-nrest">${w.cycleN}연${w.cycleM}휴</span>`;
+      } else if(w.cycleType==='biweek'){
+        const nd=biweekNext(w);
+        const ns=nd?`(${nd.getMonth()+1}/${nd.getDate()})`: '';
+        tlBadge=`<span class="tl-badge badge-nrest">격주${ns}</span>`;
+      }
+
+      // 오늘 읽었는지 체크 (22시 기준 - 전날22시~오늘22시)
+      const nowBase=new Date();
+      const base22=new Date(nowBase);
+      // 22시 이전이면 어제가 기준일
+      if(nowBase.getHours()<22) base22.setDate(base22.getDate()-1);
+      const todayKey=`${base22.getFullYear()}-${pad(base22.getMonth()+1)}-${pad(base22.getDate())}`;
+      // lastEpDate가 기준일 또는 오늘이면 읽은 것으로 표시
+      const readToday=w.lastEpDate&&(w.lastEpDate===todayKey||w.lastEpDate===todayStr());
+
+      // last pressed date
+      const lastTxt=w.lastEpDate?fmtDate(w.lastEpDate):'';
+
+      const is10cls=has10?' is-10day':'';
+
+      return`<div class="wt-card${is10cls}${sortMode?' sort-mode':''}" id="wc_${w.id}" data-id="${w.id}" style="background:${p.light}">
+        <div class="wt-thumb" style="background:linear-gradient(145deg,${p.light},${p.light}cc)">
+          ${thumbInner}
+          ${tlBadge}
+          <span class="ep-badge" style="${readToday?'background:var(--accent)':'background:rgba(26,26,46,.82)'}">${w.episode}화</span>
+          <span class="read-dot" style="display:none"></span>
+          <button class="sort-btn" title="드래그로 순서 변경">✥</button>
+          <button class="card-menu-btn" onclick="event.stopPropagation();openCtx('${w.id}',this)">
+            <svg viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="4" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="10" cy="16" r="1.5"/></svg>
+          </button>
+        </div>
+        <div class="wt-body">
+          <div class="wt-title">${esc(w.title)}</div>
+          ${searchQ?`<div class="wt-days">${esc(dayLabel(w.days))}</div>`:''}
+          <div class="wt-bottom">
+            <span class="wt-last">${lastTxt}</span>
+            ${w.status==='completed'
+              ? `<button class="heart-rating" onclick="event.stopPropagation();cycleHeart('${w.id}')">${getHearts(w.heart||0)}</button>`
+              : `<button class="ep-inc" onclick="event.stopPropagation();incEp('${w.id}')">+1화</button>`
+            }
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    const empty=`<div class="empty-state"><p>📚 작품 없음<br><small>+ 추가 버튼으로 등록</small></p></div>`;
+
+    return`<div class="plat-card">
+      <div class="plat-hdr${has?' has':''}" style="background:${p.light}">
+        <div class="plat-l">
+          <div class="plat-dot" style="background:${p.color}"></div>
+          <span class="plat-nm" style="color:${p.color}">${p.name}</span>
+          ${has?`<span class="plat-cnt">${items.length}</span>`:''}
+        </div>
+        <div class="plat-r">
+          ${has&&curDay===-1?`<button class="plat-list-btn" onclick="openSummary('${p.id}')">전체보기</button>`:''}
+          <button class="plat-add" style="background:${p.color}" onclick="openAdd('${p.id}')">+ 추가</button>
+        </div>
+      </div>
+      ${has?`<div class="wt-grid">${cards}</div>`:empty}
+    </div>`;
+  }).join('');
+
+  if(searchQ&&total===0){
+    c.innerHTML=`<div class="empty-state" style="padding:50px 18px"><p>🔍 검색 결과 없음<br><small>다른 제목으로 검색해보세요</small></p></div>`;
+  }
+  document.getElementById('totalBar').innerHTML=searchQ?`검색 결과 <strong>${total}작품</strong>`:`총 <strong>${total}작품</strong>`;
+  if(sortMode) setTimeout(initDrag,50);
+}
+
+function getHearts(n){
+  return['🤍🤍🤍','🩷🤍🤍','🩷🩷🤍','🩷🩷🩷'][n]||'🤍🤍🤍';
+}
+
+function cycleHeart(id){
+  const i=wt.findIndex(w=>w.id===id);if(i<0)return;
+  wt[i].heart=((wt[i].heart||0)+1)%4;
+  save();
+  const card=document.getElementById(`wc_${id}`);
+  if(card){
+    const hr=card.querySelector('.heart-rating');
+    if(hr) hr.textContent=getHearts(wt[i].heart);
+  }
+}
+
+/* ===== ACTIONS ===== */
+function incEp(id){
+  const i=wt.findIndex(w=>w.id===id);if(i<0)return;
+  wt[i].episode++;
+  wt[i].lastEpDate=todayStr();
+  save();
+  recapLog.push([todayStr(),id,wt[i].platform,wt[i].title]);
+  saveLog();
+
+  // 해당 카드만 업데이트 (스크롤 유지)
+  const card=document.getElementById(`wc_${id}`);
+  if(card){
+    // 화수 뱃지 업데이트 + 보라색으로
+    const badge=card.querySelector('.ep-badge');
+    if(badge){
+      badge.textContent=`${wt[i].episode}화`;
+      badge.style.background='var(--accent)';
+    }
+    // +1화 버튼 flash
+    const btn=card.querySelector('.ep-inc');
+    if(btn){btn.style.background='#c4b5fd';setTimeout(()=>btn.style.background='',300)}
+    // 날짜 업데이트
+    const last=card.querySelector('.wt-last');
+    if(last) last.textContent=fmtDate(todayStr());
+  }
+}
+
+/* ===== CONTEXT MENU ===== */
+function openCtx(id,btn){
+  ctxTargetId=id;
+  const w=wt.find(x=>x.id===id);
+  document.getElementById('ctxTitle').textContent=w?w.title:'작품';
+  const menu=document.getElementById('ctxMenu');
+  menu.classList.add('open');
+  // position near button
+  const r=btn.getBoundingClientRect();
+  let top=r.bottom+6,left=r.left-170;
+  if(left<8)left=8;
+  if(top+200>window.innerHeight)top=r.top-210;
+  menu.style.top=top+'px';menu.style.left=left+'px';
+}
+function ctxEdit(){closeAllMenus();if(ctxTargetId)openEdit(ctxTargetId)}
+function ctxDelete(){
+  if(!ctxTargetId)return;
+  const id=ctxTargetId;
+  ctxTargetId=null;
+  closeAllMenus();
+  const idx=wt.findIndex(w=>w.id===id);
+  if(idx<0)return;
+  const removed=wt.splice(idx,1)[0];
+  save();renderAll();
+  showToast(`"${removed.title}" 삭제됨`, '실행취소', ()=>{
+    wt.splice(idx,0,removed);save();renderAll();
+  });
+}
+
+function showToast(msg, actionLabel, actionFn){
+  let t=document.getElementById('toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='toast';
+    t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;z-index:999;display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(0,0,0,.25);white-space:nowrap;max-width:90vw';
+    document.body.appendChild(t);
+  }
+  clearTimeout(t._timer);
+  t.innerHTML=`<span>${msg}</span>${actionLabel&&actionFn?`<button onclick="(${actionFn.toString()})();this.closest('#toast').style.display='none'" style="border:none;background:none;color:#a78bfa;font-size:13px;font-weight:700;cursor:pointer;padding:0">${actionLabel}</button>`:''}`;
+  t.style.display='flex';
+  t._timer=setTimeout(()=>t.style.display='none',3500);
+}
+
+/* ===== BACKUP MENU ===== */
+function openBkMenu(){
+  const btn=document.getElementById('bkBtn');
+  const r=btn.getBoundingClientRect();
+  const menu=document.getElementById('bkMenu');
+  menu.style.top=(r.bottom+6)+'px';
+  menu.style.right=(window.innerWidth-r.right)+'px';
+  menu.style.left='auto';
+  menu.classList.add('open');
+}
+function doBackup(){
+  closeAllMenus();
+  const data=JSON.stringify({version:'moabom_v5',date:todayStr(),data:wt,log:recapLog},null,2);
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(data);
+  a.download=`toonbox_backup_${todayStr()}.json`;
+  a.click();
+}
+function doRestore(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const obj=JSON.parse(ev.target.result);
+      const imported=obj.data||obj.webtoons||obj;
+      if(!Array.isArray(imported))throw new Error('형식 오류');
+      wt=imported;save();renderAll();
+      if(Array.isArray(obj.log)){recapLog=obj.log;saveLog()}
+      showToast(`${imported.length}개 작품 불러오기 완료!`,'',null);
+      closeAllMenus();
+    }catch(err){
+      showToast('백업 파일을 읽을 수 없어요','',null);
+    }
+    // 초기화는 약간 딜레이 후에
+    setTimeout(()=>{e.target.value='';},300);
+  };
+  r.readAsText(file);
+}
+
+function closeAllMenus(){
+  document.getElementById('ctxMenu').classList.remove('open');
+  document.getElementById('bkMenu').classList.remove('open');
+  const cf=document.getElementById('cfMenu');
+  if(cf) cf.classList.remove('open');
+}
+
+// 메뉴 바깥 클릭 시 닫기
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#ctxMenu')&&!e.target.closest('.card-menu-btn')) document.getElementById('ctxMenu').classList.remove('open');
+  if(!e.target.closest('#bkMenu')&&!e.target.closest('#bkBtn')) document.getElementById('bkMenu').classList.remove('open');
+  const cf=document.getElementById('cfMenu');
+  if(cf&&!e.target.closest('#cfMenu')&&!e.target.closest('#cfIconBtn')) cf.classList.remove('open');
+});
+
+/* ===== MODAL ===== */
+function openAdd(pid){
+  editId=null;selEm='📚';selImg=null;thumbType='emoji';
+  document.getElementById('modalH').textContent='작품 추가';
+  document.getElementById('mtabs').style.display='flex';
+  document.getElementById('platFg').style.display='block';
+  resetForm();
+  if(pid){
+    const platIds=['bomtoon','ridi','lezhin','mbl','kakao','naver'];
+    const r=document.getElementById(`p${platIds.indexOf(pid)}`);
+    if(r)r.checked=true;
+  }
+  if(curDay!==-1){
+    const cb=document.querySelector(`#dayChecks input[value="${curDay}"]`);
+    if(cb){cb.checked=true;onDayChange(cb)}
+  }
+  setThumbType('emoji',document.querySelector('.tt-btn.on'));
+  stab('single',document.querySelector('.mtab'));
+  document.getElementById('modal').classList.add('open');
+}
+
+function openEdit(id){
+  const w=wt.find(x=>x.id===id);if(!w)return;
+  editId=id;
+  selEm=w.emoji||DEFEM[w.platform]||'📚';
+  selImg=w.image||null;
+  thumbType=w.thumbType||'emoji';
+  document.getElementById('modalH').textContent='작품 수정';
+  document.getElementById('mtabs').style.display='none';
+  document.getElementById('tabS').style.display='block';
+  document.getElementById('tabB').style.display='none';
+  document.getElementById('platFg').style.display='none';
+
+  // thumb type
+  document.querySelectorAll('.tt-btn').forEach(b=>b.classList.remove('on'));
+  const ttbtn=document.querySelector(`.tt-btn:${thumbType==='image'?'last-child':'first-child'}`);
+  if(ttbtn)ttbtn.classList.add('on');
+  document.getElementById('thumbEmoji').style.display=thumbType==='emoji'?'block':'none';
+  document.getElementById('thumbImage').style.display=thumbType==='image'?'block':'none';
+
+  document.getElementById('emDisp').textContent=selEm;
+  document.getElementById('emCustomIn').value=selEm;
+  document.getElementById('emGrid').classList.remove('open');
+  if(selImg){
+    document.getElementById('imgPreview').src=selImg;
+    document.getElementById('imgPreview').style.display='block';
+  }
+
+  document.getElementById('titleIn').value=w.title;
+  document.getElementById('epIn').value=w.episode;
+  document.getElementById('memoIn').value=w.memo||'';
+  document.getElementById('statusIn').value=w.status;
+  document.getElementById('returnDate').value=w.returnDate||'';
+  document.getElementById('returnSec').classList.toggle('show',w.status==='on_hold');
+
+  // days - checkbox
+  document.querySelectorAll('#dayChecks input').forEach(c=>c.checked=false);
+  document.querySelectorAll('#dayChecks input').forEach(c=>{
+    if(c.value==='10day') c.checked=w.days&&w.days.includes('10day');
+    else c.checked=w.days&&w.days.includes(parseInt(c.value));
+  });
+  document.getElementById('tendaySec').classList.toggle('show',!!(w.days&&w.days.includes('10day')));
+  document.getElementById('tendayIn').value=w.tendayDates||'';
+  refreshDayConstraints();
+
+  document.getElementById('cycleType').value=w.cycleType||'';
+  document.getElementById('cycleN').value=w.cycleN||'';
+  document.getElementById('cycleM').value=w.cycleM||'';
+  // 현재 실제 주차 자동 계산해서 표시
+  const curPos=w.cycleType==='nrest'?getCurrentCyclePos(w):(w.cyclePos||'');
+  document.getElementById('cyclePos').value=curPos;
+  document.getElementById('biweekDate').value=w.biweekDate||'';
+  document.getElementById('cycleSec').classList.toggle('show',w.cycleType==='nrest');
+  document.getElementById('biweekSec').classList.toggle('show',w.cycleType==='biweek');
+  updateCyclePreview();
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(){document.getElementById('modal').classList.remove('open');document.getElementById('emGrid').classList.remove('open');editId=null}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal()});
+
+function stab(t,btn){
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  document.getElementById('tabS').style.display=t==='single'?'block':'none';
+  document.getElementById('tabB').style.display=t==='bulk'?'block':'none';
+}
+
+function resetForm(){
+  document.getElementById('titleIn').value='';
+  document.getElementById('epIn').value='1';
+  document.getElementById('memoIn').value='';
+  document.getElementById('statusIn').value='reading';
+  document.getElementById('returnDate').value='';
+  document.getElementById('returnSec').classList.remove('show');
+  document.getElementById('tendayIn').value='';
+  document.getElementById('tendaySec').classList.remove('show');
+  document.getElementById('cycleType').value='';
+  document.getElementById('cycleN').value='';
+  document.getElementById('cycleM').value='';
+  document.getElementById('cyclePos').value='';
+  document.getElementById('biweekDate').value='';
+  document.getElementById('cycleSec').classList.remove('show');
+  document.getElementById('biweekSec').classList.remove('show');
+  document.getElementById('cyclePreview').textContent='';
+  document.querySelectorAll('[name="plat"]').forEach(r=>r.checked=false);
+  document.querySelectorAll('#dayChecks input').forEach(c=>c.checked=false);
+  document.getElementById('emDisp').textContent='📚';
+  document.getElementById('emCustomIn').value='';
+  document.getElementById('emGrid').classList.remove('open');
+  document.getElementById('imgPreview').style.display='none';
+  document.getElementById('imgPreview').src='';
+  selEm='📚';selImg=null;
+}
+
+/* ===== THUMB TYPE ===== */
+function setThumbType(t,btn){
+  thumbType=t;
+  document.querySelectorAll('.tt-btn').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  document.getElementById('thumbEmoji').style.display=t==='emoji'?'block':'none';
+  document.getElementById('thumbImage').style.display=t==='image'?'block':'none';
+}
+
+function onImgFile(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    selImg=ev.target.result;
+    const prev=document.getElementById('imgPreview');
+    prev.src=selImg;prev.style.display='block';
+  };
+  r.readAsDataURL(file);
+}
+
+/* ===== DAY CONSTRAINTS (radio - 1개만) ===== */
+function onDayChange(cb){
+  const all=Array.from(document.querySelectorAll('#dayChecks input'));
+  if(cb.value==='10day'&&cb.checked){
+    all.forEach(c=>{if(c.value!=='10day'){c.checked=false;c.closest('.dc').classList.add('disabled')}});
+    document.getElementById('tendaySec').classList.add('show');
+  } else {
+    document.getElementById('tendaySec').classList.remove('show');
+    document.getElementById('d10').checked=false;
+    document.getElementById('d10').closest('.dc').classList.remove('disabled');
+    const reg=all.filter(c=>c.value!=='10day'&&c.checked);
+    if(reg.length>0){
+      document.getElementById('d10').closest('.dc').classList.add('disabled');
+    }
+    all.forEach(c=>{if(c.value!=='10day')c.closest('.dc').classList.remove('disabled')});
+  }
+}
+
+function refreshDayConstraints(){
+  const all=Array.from(document.querySelectorAll('#dayChecks input'));
+  document.querySelectorAll('#dayChecks .dc').forEach(d=>d.classList.remove('disabled'));
+  const is10=document.getElementById('d10').checked;
+  if(is10){
+    all.forEach(c=>{if(c.value!=='10day')c.closest('.dc').classList.add('disabled')});
+    document.getElementById('tendaySec').classList.add('show');
+    return;
+  }
+  document.getElementById('tendaySec').classList.remove('show');
+  const reg=all.filter(c=>c.value!=='10day'&&c.checked);
+  if(reg.length>0) document.getElementById('d10').closest('.dc').classList.add('disabled');
+}
+
+function onStatusChange(){
+  document.getElementById('returnSec').classList.toggle('show',document.getElementById('statusIn').value==='on_hold');
+}
+
+function onCycleChange(){
+  const v=document.getElementById('cycleType').value;
+  document.getElementById('cycleSec').classList.toggle('show',v==='nrest');
+  document.getElementById('biweekSec').classList.toggle('show',v==='biweek');
+  updateCyclePreview();
+}
+
+function updateCyclePreview(){
+  const n=+document.getElementById('cycleN').value;
+  const m=+document.getElementById('cycleM').value;
+  const pos=+document.getElementById('cyclePos').value;
+  const el=document.getElementById('cyclePreview');
+  if(!n||!m||isNaN(pos)){el.textContent='';return}
+  const tot=n+m;
+  // 0=휴재, 1~n=연재, n+1~n+m-1=휴재...
+  const isOn=pos!==0&&pos<=n;
+  if(pos===0){
+    el.textContent=`현재 0 (휴재) → 다음주 1주차(연재) 시작`;
+  } else if(isOn){
+    const left=n-pos+1;
+    el.textContent=`현재 ${pos}주차 (연재) → ${left}주 후 휴재 (0)`;
+  } else {
+    const holdWeek=pos-n;
+    const left=tot-pos;
+    el.textContent=`현재 휴재 ${holdWeek}주차 → ${left}주 후 연재 (1주차)`;
+  }
+}
+
+/* ===== EMOJI ===== */
+function buildEmGrid(){
+  document.getElementById('emGrid').innerHTML=EMOJIS.map(e=>`<button class="em-opt" onclick="pickEm('${e}')">${e}</button>`).join('');
+}
+function toggleEm(){document.getElementById('emGrid').classList.toggle('open')}
+function pickEm(e){
+  selEm=e;document.getElementById('emDisp').textContent=e;
+  document.getElementById('emCustomIn').value=e;
+  document.querySelectorAll('.em-opt').forEach(b=>b.classList.toggle('sel',b.textContent===e));
+  document.getElementById('emGrid').classList.remove('open');
+}
+function onEmCustom(inp){
+  // 이모지는 유니코드 코드포인트 단위로 파싱 (피부톤 등 조합 이모지 지원)
+  const segs=[...new Intl.Segmenter('en',{granularity:'grapheme'}).segment(inp.value)];
+  const v=segs.map(s=>s.segment).join('').trim();
+  if(!v)return;
+  selEm=v;
+  document.getElementById('emDisp').textContent=v;
+  document.querySelectorAll('.em-opt').forEach(b=>b.classList.toggle('sel',b.textContent===v));
+}
+
+/* ===== BULK ===== */
+function buildBulkIn(){
+  document.getElementById('bulkIn').innerHTML=[
+    ...DAY_ORDER.map(i=>`<div><label class="fl">${DAY_N[i]}요일</label><textarea class="ba" id="bk${i}" rows="2" placeholder="${DAY_N[i]}요일 작품 (줄바꿈 구분)"></textarea></div>`),
+    `<div><label class="fl">10일 연재</label><textarea class="ba" id="bk10day" rows="2" placeholder="10일 연재 작품"></textarea></div>`
+  ].join('');
+}
+
+/* ===== SAVE ===== */
+/* ===== SEARCH ===== */
+function toggleSearch(){
+  const bar=document.getElementById('searchBar');
+  const open=!bar.classList.contains('open');
+  bar.classList.toggle('open',open);
+  document.getElementById('searchBtn').classList.toggle('on',open);
+  if(open){setTimeout(()=>document.getElementById('searchIn').focus(),30)}
+  else clearSearch(true);
+}
+function onSearch(v){
+  searchQ=normTitle(v);
+  document.getElementById('searchClear').style.display=v?'block':'none';
+  document.querySelector('.sf-row').style.display=searchQ?'none':'';
+  renderAll();
+}
+function clearSearch(keepOpen){
+  const inp=document.getElementById('searchIn');
+  inp.value='';
+  onSearch('');
+  if(keepOpen!==true)inp.focus();
+}
+
+/* ===== DUPLICATE CHECK ===== */
+function dayLabel(days){
+  if(!days||!days.length)return'요일 없음';
+  return days.map(d=>d==='10day'?'10일':DAY_N[d]).join('·');
+}
+function daysKey(days){return (days||[]).map(String).sort().join(',')}
+function platName(id){const p=PLATS.find(x=>x.id===id);return p?p.name:id}
+function findDup(title,platform,days,extra){
+  const t=normTitle(title),k=daysKey(days);
+  return [...wt,...(extra||[])].some(w=>w.platform===platform&&normTitle(w.title)===t&&daysKey(w.days)===k);
+}
+let dupAction=null;
+function showDup(lines,onConfirm){
+  dupAction=onConfirm;
+  document.getElementById('dupMsg').textContent=lines.length===1
+    ?'제목·플랫폼·요일이 모두 같은 작품이 이미 있어요. 그래도 추가할까요?'
+    :`제목·플랫폼·요일이 모두 같은 작품이 ${lines.length}개 있어요. 그래도 추가할까요?`;
+  document.getElementById('dupList').innerHTML=lines.map(l=>`<div>${esc(l)}</div>`).join('');
+  document.getElementById('dupOverlay').classList.add('open');
+}
+function closeDup(){document.getElementById('dupOverlay').classList.remove('open');dupAction=null}
+function confirmDup(){const fn=dupAction;closeDup();if(fn)fn()}
+
+function saveW(){
+  const isBulk=document.getElementById('tabB').style.display!=='none'&&editId===null;
+  if(isBulk){
+    const bp=document.querySelector('[name="bp"]:checked');
+    if(!bp){alert('플랫폼을 선택해주세요');return}
+    const newItems=[],dupLines=[];
+    [...DAY_ORDER,'10day'].forEach(dv=>{
+      const ta=document.getElementById(`bk${dv}`);
+      if(!ta||!ta.value.trim())return;
+      ta.value.trim().split('\n').forEach(t=>{
+        t=t.trim();if(!t)return;
+        if(findDup(t,bp.value,[dv],newItems))dupLines.push(`${t} · ${platName(bp.value)} · ${dayLabel([dv])}`);
+        newItems.push({id:gid(),title:t,platform:bp.value,days:[dv],status:'reading',episode:1,emoji:'📚',thumbType:'emoji'});
+      });
+    });
+    if(!newItems.length){alert('작품을 입력해주세요');return}
+    const commitBulk=()=>{
+      wt.push(...newItems);
+      save();renderAll();
+      document.querySelectorAll('[name="bp"]').forEach(r=>r.checked=false);
+      [...DAY_ORDER,'10day'].forEach(dv=>{
+        const ta=document.getElementById(`bk${dv}`);
+        if(ta)ta.value='';
+      });
+      closeModal();
+    };
+    if(dupLines.length)showDup(dupLines,commitBulk);else commitBulk();
+    return;
+  }
+
+  const title=document.getElementById('titleIn').value.trim();
+  if(!title){alert('작품 제목을 입력해주세요');return}
+  // checkbox로 여러 요일 선택
+  const days=Array.from(document.querySelectorAll('#dayChecks input:checked')).map(c=>c.value==='10day'?'10day':parseInt(c.value));
+  const tendayDates=days.includes('10day')?document.getElementById('tendayIn').value.trim():'';
+  const cycleType=document.getElementById('cycleType').value;
+  const cycleN=cycleType==='nrest'?document.getElementById('cycleN').value:'';
+  const cycleM=cycleType==='nrest'?document.getElementById('cycleM').value:'';
+  const cyclePos=cycleType==='nrest'?document.getElementById('cyclePos').value:'';
+  const biweekDate=cycleType==='biweek'?document.getElementById('biweekDate').value:'';
+  const ep=parseInt(document.getElementById('epIn').value)||1;
+  const status=document.getElementById('statusIn').value;
+  const returnDate=status==='on_hold'?document.getElementById('returnDate').value:'';
+  const memo=document.getElementById('memoIn').value.trim();
+  const image=thumbType==='image'?selImg:null;
+  const emoji=thumbType==='emoji'?selEm:'📚';
+
+  if(editId){
+    const i=wt.findIndex(w=>w.id===editId);if(i<0)return;
+    wt[i]={...wt[i],title,days,status,episode:ep,emoji,thumbType,image,
+      tendayDates,cycleType,cycleN,cycleM,cyclePos,biweekDate,returnDate,memo,
+      cycleSavedWeek:cycleType==='nrest'?getWeekNum():undefined};
+  } else {
+    const pr=document.querySelector('[name="plat"]:checked');
+    if(!pr){alert('플랫폼을 선택해주세요');return}
+    const newW={id:gid(),title,platform:pr.value,days,status,episode:ep,emoji,thumbType,image,
+      tendayDates,cycleType,cycleN,cycleM,cyclePos,biweekDate,returnDate,memo,
+      cycleSavedWeek:cycleType==='nrest'?getWeekNum():undefined};
+    const commitOne=()=>{wt.push(newW);save();renderAll();closeModal()};
+    if(findDup(title,pr.value,days))showDup([`${title} · ${platName(pr.value)} · ${dayLabel(days)}`],commitOne);
+    else commitOne();
+    return;
+  }
+  save();renderAll();closeModal();
+}
+
+/* ===== SUMMARY MODAL ===== */
+let sumPlatId=null;
+
+function openSummary(platId){
+  sumPlatId=platId||PLATS[0].id;
+  renderSumTabs();
+  renderSumBody();
+  document.getElementById('sumOverlay').classList.add('open');
+}
+function closeSummary(){document.getElementById('sumOverlay').classList.remove('open')}
+document.getElementById('sumOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('sumOverlay'))closeSummary()});
+
+function renderSumTabs(){
+  const tabs=document.getElementById('sumPlatTabs');
+  tabs.innerHTML=PLATS.map(p=>{
+    const on=p.id===sumPlatId;
+    return`<button class="spt${on?' on':''}" style="${on?`background:${p.color}`:'color:var(--sub)'}" onclick="sumSelPlat('${p.id}')">${p.name}</button>`;
+  }).join('');
+}
+
+function sumSelPlat(pid){sumPlatId=pid;renderSumTabs();renderSumBody()}
+
+function renderSumBody(){
+  const body=document.getElementById('sumBody');
+  const platWt=wt.filter(w=>w.platform===sumPlatId);
+  if(!platWt.length){body.innerHTML=`<div style="text-align:center;padding:30px;color:var(--sub);font-size:13px">등록된 작품이 없어요</div>`;return}
+
+  const sections=[];
+  // 요일별 - 휴재/완결 제외
+  DAY_ORDER.forEach(dayIdx=>{
+    const items=platWt.filter(w=>
+      w.days&&w.days.includes(dayIdx)&&!w.days.includes('10day')
+      &&w.status!=='on_hold'&&w.status!=='completed'
+    );
+    if(items.length) sections.push({label:`${DAY_N[dayIdx]}요일`,items,key:dayIdx});
+  });
+  // 10일 연재 - 휴재/완결 제외
+  const tenItems=platWt.filter(w=>w.days&&w.days.includes('10day')&&w.status!=='on_hold'&&w.status!=='completed');
+  if(tenItems.length) sections.push({label:'10일 연재',items:tenItems,key:'10day'});
+  // 휴재 및 완결만
+  const specialItems=platWt.filter(w=>w.status==='on_hold'||w.status==='completed');
+  if(specialItems.length) sections.push({label:'휴재 및 완결',items:specialItems,key:'special'});
+
+  body.innerHTML=sections.map(sec=>{
+    if(!sec.items.length)return'';
+    const rows=sec.items.map(w=>{
+      const returned=shouldShowReturned(w);
+      let badge='';
+      const has10=w.days&&w.days.includes('10day');
+      if(w.status==='completed') badge=`<span class="sum-item-badge sib-done">완결</span>`;
+      else if(w.status==='on_hold'&&!returned){
+        const rd=w.returnDate?` ~${fmtDate(w.returnDate)}`:'';
+        badge=`<span class="sum-item-badge sib-hold">휴재${rd}</span>`;
+      } else if(returned) badge=`<span class="sum-item-badge sib-return">복귀↑</span>`;
+      else if(has10&&w.tendayDates) badge=`<span class="sum-item-badge sib-10day">10일 (${w.tendayDates})</span>`;
+      else if(w.cycleType==='nrest'&&w.cycleN&&w.cycleM) badge=`<span class="sum-item-badge sib-nrest">${w.cycleN}연${w.cycleM}휴</span>`;
+
+      // 휴재/완결 섹션에서는 요일 prefix 표시
+      const dayPfx=sec.key==='special'&&w.days&&w.days.length
+        ?`<span class="sum-item-day">[${w.days[0]==='10day'?'10일':DAY_N[w.days[0]]}]</span>`:'';
+
+      return`<div class="sum-item">
+        <div class="sum-item-left">
+          ${dayPfx}<span class="sum-item-name">${esc(w.title)}</span>
+        </div>
+        ${badge}
+      </div>`;
+    }).join('');
+    return`<div class="sum-day-sec">
+      <div class="sum-day-lbl">${sec.label}<span class="sum-day-cnt">${sec.items.length}개</span></div>
+      <div class="sum-list">${rows}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ===== UTILS ===== */
+function gid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function save(){localStorage.setItem('moabom_v5',JSON.stringify(wt))}
+
+/* ===== AUTO REFRESH 22:00 ===== */
+function schedRefresh(){
+  const now=new Date(),next=new Date(now);
+  next.setHours(22,0,5,0);if(now>=next)next.setDate(next.getDate()+1);
+  setTimeout(()=>{
+    curDay=dispDay();renderTabs();renderAll();
+    schedRefresh();
+  },next-now);
+}
+
+// 시작 시 오늘 요일 탭으로
+curDay=dispDay();
+filter=curDay===-1?'all':'reading';
+init();
+if(curDay===-1){
+  const cfIcon=document.getElementById('cfIconBtn');
+  if(cfIcon) cfIcon.style.display='flex';
+}
+schedRefresh();
+
+// PWA 서비스워커 등록
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
